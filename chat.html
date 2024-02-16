@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="keywords" content="Node, events, sockets, chat">
+    <title>Chat App</title>
+    <style>
+        .container {
+            margin: auto;
+            width: 60%;
+            border: 5px solid white;
+            padding: 10px;
+            background-color: black;
+            color: white;
+        }
+
+        #chatDisplay p {
+            font-size: 25px;
+            color: white;
+       
+        }
+
+        .bottom-panel,
+        .bottom-panel input {
+            font-size: 25px;
+        }
+
+        #sendButton {
+            font-size: 22px;
+            background-color: green;
+            color: white
+        }
+
+        #connect {
+            background-color: rgb(0, 102, 255);
+            color: whitesmoke;
+        }
+
+        #disConnect {
+            background-color: red;
+        }
+    </style>
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"
+        integrity="sha384-mZLF4UVrpi/QTWPA7BjNPEnkIfRFn4ZEO3Qt/HFklTJBj/gBOV8G3HcKn4NfQblz"
+        crossorigin="anonymous"></script>
+
+    <script src="app.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
+</head>
+
+<body>
+    <div class="container" style="height: 500px;max-height: 500px;overflow-y: scroll;">
+        <div id="chatDisplay"></div>
+    </div>
+    <div class="container bottom-panel">
+        <button id='connect'>Connect</button><button id='disConnect'>Disconnect</button>
+        <p>Number of count in the chat: <span id="count"></span></p>
+        <p>Current Server Time: <span id="time-display"></span></p>
+        <p>Your Name: <input type="text" id="name" /></p>
+        <p>Your Message: <input type="text" id="message" style="width: 100%" /></p>
+        <button id='sendButton'>Send Message</button>
+    </div>
+
+
+
+
+    <script>
+        //attempt to connect to the socket.io server
+        
+       let connectSound = new Audio("connects.mp3");
+        let socket;
+
+        //got our necessary DOM element once at the beginning of the script
+        const chatDisplayElement = document.querySelector("#chatDisplay");
+        const nameInputElement = document.querySelector("#name");
+        const messageInputElement = document.querySelector("#message");
+        const sendButtonElement = document.querySelector("#sendButton");
+        const timeSpan = document.querySelector("#time-display");
+        const countElement = document.querySelector('#count')
+        const connectButton = document.querySelector("#connect")
+        const disconnectButton = document.querySelector("#disConnect")
+
+
+        // Function to play the audio
+        function playAudio() {
+            connectSound.play();
+        }
+
+        //CONNECT USER TO SERVER
+        connectButton.addEventListener("click", () => {
+            socket = io();
+
+            //handle the welcome message
+            socket.on('welcome', (message) => {
+                console.log(message)
+
+                //how can i write this message to the HTML DOM
+                const pTag = document.createElement("p");
+                pTag.innerText = message;
+
+                const chatDisplay = document.querySelector("#chatDisplay");
+                chatDisplay.appendChild(pTag);
+
+             
+            });
+
+
+            // Disable input fields
+            nameInputElement.disabled = false;
+            messageInputElement.disabled = false;
+            // Enable the disconnect button
+            disconnectButton.disabled = false;
+            // Disable the connect button
+            connectButton.disabled = true;
+
+
+            //write out number of count in the chat
+            socket.on('count', (count) => {
+                countElement.innerText = count;
+            })
+
+
+            //handle (listen for) server time events
+            socket.on('server_time', (serverTime) => {
+                timeSpan.innerText = serverTime;
+            });
+
+
+            //send the new chat to the server
+            socket.on('new_message', (messageInfo) => {
+                console.log(messageInfo);
+
+                // Format the timestamp
+                const formattedTimestamp = new Date().toLocaleTimeString();
+
+                //how can i write this message to the HTML DOM
+                const pTag = document.createElement("p");
+                pTag.innerText = `[${messageInfo.name}]  - ${messageInfo.message} - ${formattedTimestamp}`;
+                document.querySelector("#chatDisplay").appendChild(pTag);
+            });
+
+
+            //handle a new client event
+            document.querySelector("#sendButton").addEventListener("click", () => {
+
+                //get the message from the input boxes
+                const username = nameInputElement.value;
+                const newChat = messageInputElement.value;
+                //let handle empty message
+                // if (newChat === "") {
+                //     alert("Please enter a message");
+                //     return;
+                // }s
+
+                if (username.length === 0 || newChat === 0) {
+                    alert("Please enter a name and message");
+
+                }
+                else {
+                    ///bundle my info into an object before sending
+                    const data = {
+                        name: username,
+                        message: newChat
+                    };
+                    ////emit a new event to send the new chat to the server
+                    socket.emit('message', data);
+                    //clear the message box
+                    messageInputElement.value = "";
+                }
+                // ///bundle my info into an object before sending
+                // const data = {
+                //     name: username,
+                //     message: newChat};
+
+
+                // ////emit a new event to send the new chat to the server
+                // socket.emit('message', data);
+
+            });
+
+
+        
+
+
+
+
+
+
+        });
+
+
+
+
+
+        disconnectButton.addEventListener("click", () => {
+            timeSpan.innerText = '';
+            countElement.innerText = '';
+            chatDisplayElement.innerText = '';
+
+            // Disable the disconnect button
+            disconnectButton.disabled = true;
+            // Enable the connect button
+            connectButton.disabled = false;
+            // Disable input fields
+            nameInputElement.disabled = true;
+            messageInputElement.disabled = true;
+            sendButtonElement.disabled=true;
+
+
+            alert("Are you sure you want to disconnect");
+            // // Remove the 'count' event listener
+            // socket.off('count', timeSpan);
+
+            socket.disconnect()
+            // Handle the server disconnecting
+            // socket.on('disconnect', () => {
+            //     console.log('server disconnected');
+            //     count--;
+            // });
+        });
+
+
+        //handle the server disconnecting
+        socket.on('disconnect', () => {
+            console.log('Server Disconnected')
+        });
+
+
+
+
+
+    </script>
+</body>
+
+</html>

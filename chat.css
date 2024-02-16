@@ -1,0 +1,12 @@
+#connect{
+    background-color: blue;
+}
+
+#disConnect{
+    background-color: red;
+
+}
+
+#sendButton{
+  background-color: green;
+}
