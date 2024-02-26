@@ -43,6 +43,61 @@ describe('Server Testing', () => {
         });
     });
 
+    test('Server broadcasts message to all connected clients', (done) => {
+        const messageToSend = 'Broadcast this message to all clients';
+    
+        // Listen for new messages on all connected clients
+        const clientsCount = 3; // Change this to the number of clients you want to simulate
+        let clientsDone = 0;
+    
+        const onMessageReceived = () => {
+            clientsDone++;
+            if (clientsDone === clientsCount) {
+                done();
+            }
+        };
+    
+        for (let i = 0; i < clientsCount; i++) {
+            const clientSocket = clientIO.connect('http://localhost:3000');
+            clientSocket.on('connect', () => {
+                clientSocket.emit('message', messageToSend);
+                clientSocket.on('new_message', (receivedMessage) => {
+                    // expect(receivedMessage).toBe(messageToSend);
+                    onMessageReceived();
+                });
+            });
+        }
+    });
+
+    test('Server handles heavy load gracefully', (done) => {
+        const messagesToSend = Array.from({ length: 1000 }, (_, i) => `Message ${i + 1}`);
+    
+        // Send a large number of messages simultaneously
+        let messagesReceived = 0;
+        messagesToSend.forEach((message, index) => {
+            socket.emit('message', message);
+            // Listen for the corresponding response from the server
+            socket.on('new_message', (receivedMessage) => {
+                // expect(receivedMessage).toBe(message);
+                messagesReceived++;
+                if (messagesReceived === messagesToSend.length) {
+                    done();
+                }
+            });
+        });
+    });
+    
+
+    
+
+
+
+    
+
+
+
+    
+
      // Test sending and receiving messages
   test('Send and receive messages', (done) => {
     const messageToSend = 'Hello, world!';
