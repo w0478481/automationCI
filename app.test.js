@@ -43,6 +43,8 @@ describe('Server Testing', () => {
         });
     });
 
+    //Test case to check if Server broadcasts message to all connected clients
+
     test('Server broadcasts message to all connected clients', (done) => {
         const messageToSend = 'Broadcast this message to all clients';
     
@@ -69,6 +71,8 @@ describe('Server Testing', () => {
         }
     });
 
+
+// Test case to check if Server handles heavy load gracefully'
     test('Server handles heavy load gracefully', (done) => {
         const messagesToSend = Array.from({ length: 1000 }, (_, i) => `Message ${i + 1}`);
     
@@ -86,17 +90,9 @@ describe('Server Testing', () => {
             });
         });
     });
-    
-
-    
 
 
 
-    
-
-
-
-    
 
      // Test sending and receiving messages
   test('Send and receive messages', (done) => {
